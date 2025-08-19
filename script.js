@@ -11,6 +11,13 @@ taskInput.addEventListener("keydown", function (event) {
     addTask();
   }
 });
+function saveTasks(task) {
+  const storedList = localStorage.getItem("tasks");
+  const parsedList = JSON.parse(storedList) || [];
+  parsedList.push(task);
+  const stringifiedList = JSON.stringify(parsedList);
+  localStorage.setItem("tasks", stringifiedList);
+}
 
 function addTask() {
   const taskText = taskInput.value;
@@ -18,13 +25,25 @@ function addTask() {
   //if empty input
   if (taskText === "") return;
 
+  const task = {
+    id: Math.random(),
+    text: taskText,
+  };
+
+  saveTasks(task);
+  addTaskToDom(task);
+  //Clear input
+  taskInput.value = "";
+}
+function addTaskToDom(task) {
   //Create list item
   const li = document.createElement("li");
   li.classList.add("task-item");
+  li.dataset.id = task.id;
 
   //Task text
   const span = document.createElement("span");
-  span.textContent = taskText;
+  span.textContent = task.text;
   span.classList.add("task-text");
 
   //Checkbox
@@ -47,27 +66,46 @@ function addTask() {
   li.appendChild(span);
   li.appendChild(actions);
   taskList.appendChild(li);
-
-  //Clear input
-  taskInput.value = "";
+}
+function removeStorage(id) {
+  const storedList = localStorage.getItem("tasks");
+  const parsedList = JSON.parse(storedList) || [];
+  tasks = parsedList.filter((t) => t.id != Number(id));
+  const stringifiedList = JSON.stringify(tasks);
+  localStorage.setItem("tasks", stringifiedList);
+}
+function updateTaskStorage(id, completed) {
+  const storedList = localStorage.getItem("tasks");
+  const parsedList = JSON.parse(storedList) || [];
+  tasks = parsedList.map((t) => (t.id == Number(id) ? { ...t, completed } : t));
+  const stringifiedList = JSON.stringify(tasks);
+  localStorage.setItem("tasks", stringifiedList);
 }
 // Event Delegation for checkbox & delete
 taskList.addEventListener("click", function (event) {
   // Delete task
   if (event.target.classList.contains("delete-btn")) {
-    let el = event.target;
-    while (el.tagName !== "LI") {
-      el = el.parentElement;
-    }
-    el.remove();
+    const li = event.target.closest("li");
+    const id = li.dataset.id;
+    removeStorage(id);
+    li.remove();
   }
   // Complete task
   if (event.target.classList.contains("task-checkbox")) {
+    const li = event.target.closest("li");
+    const id = li.dataset.id;
     const taskText = event.target.nextElementSibling;
     if (event.target.checked) {
       taskText.classList.add("completed");
+      updateTaskStorage(id,true)
     } else {
       taskText.classList.remove("completed");
+      updateTaskStorage(id,false)
     }
   }
+});
+document.addEventListener("DOMContentLoaded", () => {
+  const storedList = localStorage.getItem("tasks");
+  const tasks = JSON.parse(storedList) || [];
+  tasks.forEach((task) => addTaskToDom(task));
 });
