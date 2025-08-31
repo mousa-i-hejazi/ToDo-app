@@ -11,23 +11,35 @@ taskInput.addEventListener("keydown", function (event) {
     addTask();
   }
 });
+function getTasks() {
+  try {
+    const storedList = localStorage.getItem("tasks");
+    return JSON.parse(storedList) || [];
+  } catch (error) {
+    console.error("Error parsing:", error);
+    return [];
+  }
+}
 function saveTasks(task) {
-  const storedList = localStorage.getItem("tasks");
-  const parsedList = JSON.parse(storedList) || [];
-  parsedList.push(task);
-  const stringifiedList = JSON.stringify(parsedList);
-  localStorage.setItem("tasks", stringifiedList);
+  try {
+    const tasks = getTasks();
+    tasks.push(task);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  } catch (error) {
+    console.error("Error saving:", error);
+  }
 }
 
 function addTask() {
-  const taskText = taskInput.value;
+  const taskText = taskInput.value.trim();
 
   //if empty input
-  if (taskText === "") return;
+  if (!taskText) return;
 
   const task = {
     id: Math.random(),
     text: taskText,
+    completed: false,
   };
 
   saveTasks(task);
@@ -45,11 +57,15 @@ function addTaskToDom(task) {
   const span = document.createElement("span");
   span.textContent = task.text;
   span.classList.add("task-text");
+  if (task.completed) {
+    span.classList.add("completed");
+  }
 
   //Checkbox
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.classList.add("task-checkbox");
+  checkbox.checked = task.completed || false;
 
   //Actions container
   const actions = document.createElement("div");
@@ -97,10 +113,10 @@ taskList.addEventListener("click", function (event) {
     const taskText = event.target.nextElementSibling;
     if (event.target.checked) {
       taskText.classList.add("completed");
-      updateTaskStorage(id,true)
+      updateTaskStorage(id, true);
     } else {
       taskText.classList.remove("completed");
-      updateTaskStorage(id,false)
+      updateTaskStorage(id, false);
     }
   }
 });
